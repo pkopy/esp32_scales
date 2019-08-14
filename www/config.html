@@ -1,0 +1,35 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Matching Game</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <link rel="stylesheet" href="/www/roboto.css" type='text/css'> 
+    <link rel="stylesheet" href="/www/app.css">
+    
+</head>
+    <body>
+        <div class="container">
+            <h1>WiFi Config</h1>
+            <table>
+                <tbody>
+                    <tr></tr>
+                    <th class="name-header">Name</th><th class="bssid-header">BSSID</th><th class="signal-header">Signal</th><th class="channel-header">Channel</th><th class="auth-header">Auth</th></tr>
+                    %s
+                </tbody>
+            </table>
+
+            <div class="pass">
+                <form action="/login" method="POST">
+                    <input id="wifi" type="text" name="wifi"/>
+                    <input type="password" name="pass"/>
+                    <input type="submit" value="CONNECT"/>
+                </form>
+            </div>
+        </div>
+        <script src="/www/config.js"></script>
+    </body>
+</html>
