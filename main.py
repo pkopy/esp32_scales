@@ -4,7 +4,7 @@ from machine import idle
 import udp
 import wifiConfig
 import json
-import upysh as xx
+import upysh as fm
 # import gc
 # gc.collect()
                        
@@ -46,8 +46,9 @@ def connect(obj):
     wlan.connect(obj['wifi'], obj['pass'])
     while not wlan.isconnected():
         idle()
-        break
+        print('Connecting...')
     print('Connected:', wlan.ifconfig())
+    
 
     
 if len(config) > 0:

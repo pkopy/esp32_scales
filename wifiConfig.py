@@ -9,7 +9,8 @@ wlan.active(True)
 def startConfig():
     wlan_ap = network.WLAN(network.AP_IF)
     wlan_ap.active(True)
-    wlan_ap.config(essid='ESP32-PK1')
+    wlan_ap.config(essid='ESP32-PK2')
+    wlan_ap.ifconfig(('192.168.0.1','255.255.255.0','192.168.0.1','8.8.8.8'))
     print('AP config:', wlan_ap.ifconfig())
 
     import socket
@@ -78,8 +79,8 @@ def startConfig():
             # count = 0
             if not wlan.isconnected():
                 wlan.connect(reqObj['body']['wifi'], reqObj['body']['pass'])
-                print('connecting to network...')
                 while not wlan.isconnected():
+                    print('connecting to network...')
                     pass
     
             cl.sendall('<h1>Connect with ' + reqObj['body']['wifi'] + ' ' + str(wlan.ifconfig()[0]) + '</h1>')
