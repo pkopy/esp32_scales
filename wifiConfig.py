@@ -2,14 +2,23 @@ import machine
 import network
 import ubinascii
 import json
+import urequests
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 
+def config(clientSocket, data, nets):
+    rows = []
+    for net in nets:
+        row = '<tr><td class="name">%s</td><td class="bssid">%s</td><td class="signal">%s</td><td class="channel">%s</td><td class="auth">%s</td></tr>'  % (net['name'], net['mac'], net['rssi'], net['channel'], net['auth'])
+        rows.append(row)
+    response = data % '\n'.join(rows)
+    clientSocket.sendall(response)   
+
 def startConfig():
     wlan_ap = network.WLAN(network.AP_IF)
     wlan_ap.active(True)
-    wlan_ap.config(essid='ESP32-PK2')
+    wlan_ap.config(essid='ESP32-PK1')
     wlan_ap.ifconfig(('192.168.0.1','255.255.255.0','192.168.0.1','8.8.8.8'))
     print('AP config:', wlan_ap.ifconfig())
 
@@ -77,19 +86,24 @@ def startConfig():
 
         if url=='login':
             # count = 0
+            ipAddress = ''
             if not wlan.isconnected():
                 wlan.connect(reqObj['body']['wifi'], reqObj['body']['pass'])
                 while not wlan.isconnected():
                     print('connecting to network...')
                     pass
+                ipAddress = wlan.ifconfig()
     
             cl.sendall('<h1>Connect with ' + reqObj['body']['wifi'] + ' ' + str(wlan.ifconfig()[0]) + '</h1>')
 
             try:
+                # addrX = '10.10.20.107'
                 f = open('config.conf', 'w+')
                 msg = {
                     'wifi':reqObj['body']['wifi'],
-                    'pass':reqObj['body']['pass']
+                    'pass':reqObj['body']['pass'],
+                    'ip':ipAddress[0],
+                    'gateway': ipAddress[2]
                 }
                 x = json.dumps(msg)
                 print(x)
@@ -97,6 +111,8 @@ def startConfig():
                 print('zapisano')
                 f.close()
                 cl.close()
+                # response = urequests.get('http://'+ ipAddress[2] + ':5000/addDevice?adrr=' + ipAddress[0])
+                # response.close()
                 import ws1
             except:
                 print('could not write')
@@ -111,7 +127,6 @@ def startConfig():
                 f.close()
             except:
                 print('could not open')
-
             config(cl, configData, nets)
         
         elif len(data) > 0:
@@ -120,11 +135,5 @@ def startConfig():
             cl.sendall('NOT FOUND')
         cl.close()
                 
-def config(clientSocket, data, nets):
-    rows = []
-    for net in nets:
-        row = '<tr><td class="name">%s</td><td class="bssid">%s</td><td class="signal">%s</td><td class="channel">%s</td><td class="auth">%s</td></tr>'  % (net['name'], net['mac'], net['rssi'], net['channel'], net['auth'])
-        rows.append(row)
-    response = data % '\n'.join(rows)
-    clientSocket.sendall(response)                
+             
             

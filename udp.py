@@ -29,9 +29,9 @@ def udp_server(host='0.0.0.0', port=1234):
     if daa == b'':
         test()
     else:
-        test()
+        # test()
         # print('udp is closed')
-        # import ws1
+        import ws1
         # ws1.start()
     
 

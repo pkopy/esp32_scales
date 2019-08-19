@@ -56,9 +56,10 @@ if len(config) > 0:
     if not wlan.isconnected() and 'wifi' in test and not 'guid' in test:
         connect(test)
         udp.test()
-    if 'guid' in test and 'wifi' in test:
-        connect(test)
-        import ws1
+        # import ws1
+    # if 'guid' in test and 'wifi' in test:
+    #     connect(test)
+    #     import ws1
     # print(test)
 else:
     wifiConfig.startConfig()
