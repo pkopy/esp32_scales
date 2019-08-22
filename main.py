@@ -5,6 +5,7 @@ import udp
 import wifiConfig
 import json
 import upysh as fm
+import urequests
 # import gc
 # gc.collect()
                        
@@ -55,6 +56,8 @@ if len(config) > 0:
     test = json.loads(config)
     if not wlan.isconnected() and 'wifi' in test and not 'guid' in test:
         connect(test)
+        # response = urequests.post("http://10.10.20.107:5000/addDevice", json={"oko":155})
+        # response.close()
         udp.test()
         # import ws1
     # if 'guid' in test and 'wifi' in test:

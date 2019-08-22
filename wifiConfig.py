@@ -111,8 +111,7 @@ def startConfig():
                 print('zapisano')
                 f.close()
                 cl.close()
-                # response = urequests.get('http://'+ ipAddress[2] + ':5000/addDevice?adrr=' + ipAddress[0])
-                # response.close()
+                
                 import ws1
             except:
                 print('could not write')

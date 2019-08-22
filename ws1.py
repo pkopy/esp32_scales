@@ -7,6 +7,7 @@ from time import sleep
 from machine import UART
 import udp
 import uartData
+import urequests
 # import gc
 # gc.collect()
 
@@ -17,7 +18,7 @@ uart = UART(2, 9600, tx=17, rx=16 )
 
 # Pull time from Internet
 rtc = RTC()
-rtc.ntp_sync(server='us.pool.ntp.org', tz='EST-2')
+rtc.ntp_sync(server='192.168.4.1', tz='EST-2')
 
 # Instatiate hardware timer
 tm = Timer(0)
@@ -143,7 +144,11 @@ def cb_timer(timer, websocket, objData):
             dict['measureNumber'] = len(measures) - 1
             print('add measure')
             measures[0]['newMeasure'] = False
-            
+            try:
+                response = urequests.post("http://10.10.20.107:5000/addDevice", json=dict)
+                response.close()
+            except:
+                print('Could not send to DB')
             print(measures)
         
         # if len(measures) > 1:
@@ -173,6 +178,7 @@ def cb_timer(timer, websocket, objData):
             objToSend['stab'] = dict['stab']
 
         websocket.SendText(json.dumps(objToSend))
+        
         
         if 'quantity' in objData and objData['quantity'] == dict['measureNumber']:
             measures[0]['newMeasure'] = True
