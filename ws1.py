@@ -8,6 +8,7 @@ from machine import UART
 import udp
 import uartData
 import urequests
+import time
 # import gc
 # gc.collect()
 
@@ -41,8 +42,7 @@ def cb_receive_text(webSocket, msg) :
         cb = lambda timer: cb_timer(timer, webSocket, receivedData)
         # Init and start timer to poll temperature sensor
         tm.init(period=250, callback=cb)
-    if 'command' in receivedData and receivedData['command'] == 'STOP':
-        tm.deinit()
+    
     if 'command' in receivedData and receivedData['command'] == 'C' and len(measures) > 1:
         continueObj = {
             'all':measures,
@@ -50,6 +50,14 @@ def cb_receive_text(webSocket, msg) :
         }
         print(tm)
         webSocket.SendText(json.dumps(continueObj))
+        cb = lambda timer: cb_timer(timer, webSocket, receivedData)
+        # Init and start timer to poll temperature sensor
+        tm.init(period=250, callback=cb)
+    else:
+        cb = lambda timer: cb_timer(timer, webSocket, receivedData)
+        # Init and start timer to poll temperature sensor
+        tm.init(period=250, callback=cb)
+
     if 'command' in receivedData and receivedData['command'] == 'ADD':
         
         try:
@@ -88,9 +96,7 @@ def cb_closed(webSocket) :
     # stop()
     print("WS CLOSED")
 
-def cb_timer(timer, websocket, objData):
-    # Store data in dict
-    
+def useCommand(objData):
     dict = {
         'min':0,
         'max':0,
@@ -98,10 +104,8 @@ def cb_timer(timer, websocket, objData):
         'measure':0,
         'treshold':1
     }
-    pin = machine.Pin(2, machine.Pin.OUT)
-
     if 'command' in objData:
-        uart.write(objData['command'] +'\r\n')
+        uart.write('SI\r\n')
         data = uart.read()
         scale_response = data.decode('ascii')
         command = scale_response[:scale_response.find(' ')]
@@ -122,17 +126,30 @@ def cb_timer(timer, websocket, objData):
                     dict['measure'] = float(measure[:measure.find('g')-1])
                 except:
                     print('bad value')
-        print('msasas: ', measure[:measure.find('g')-1])
-        dict['command'] = command
+        print('masa: ', measure[:measure.find('g')-1])
+        print('command:', objData['command'] )
+        dict['command'] = objData['command']
         dict['time'] = rtc.now()
-        dict['max'] = objData['max']
-        dict['min'] = objData['min']
-        dict['base'] = objData['base']
-        dict['treshold'] = objData['treshold']
+        dict['max'] = 'max' in objData and objData['max'] or 0
+        dict['min'] = 'min' in objData and objData['min'] or 0
+        dict['base'] = 'base' in objData and objData['base'] or 0
+        dict['treshold'] = 'treshold' in objData and objData['treshold'] or 0
         dict['measureNumber'] = 0
 
+        return dict
+
+
+def cb_timer(timer, websocket, objData):
+    # Store data in dict
+    
+    
+    pin = machine.Pin(2, machine.Pin.OUT)
+
+    
+    dict = useCommand(objData)
         
         
+    if dict['command'] == 'SI':
         if 'base' in objData:
             inRange = (dict['measure'] < objData['base'] + objData['max'] and  dict['measure'] > objData['base'] - objData['min']) and True or False
             # print(inRange)
@@ -142,13 +159,14 @@ def cb_timer(timer, websocket, objData):
             
             dict['stab'] = dict['measure']
             dict['measureNumber'] = len(measures) - 1
-            print('add measure')
-            measures[0]['newMeasure'] = False
+            dict['orderguid'] = objData['guid']
             try:
                 response = urequests.post("http://10.10.20.107:5000/addDevice", json=dict)
                 response.close()
             except:
                 print('Could not send to DB')
+            print('add measure')
+            measures[0]['newMeasure'] = False
             print(measures)
         
         # if len(measures) > 1:
@@ -181,15 +199,29 @@ def cb_timer(timer, websocket, objData):
         
         
         if 'quantity' in objData and objData['quantity'] == dict['measureNumber']:
+            tm.deinit()
             measures[0]['newMeasure'] = True
             measures[0]['complete'] = True
             uart.read()
-            tm.deinit()
             objToSend['measure'] = 0
             websocket.SendText(json.dumps(objToSend))
+            objData['command'] = ''
+            time.sleep(1)
 
-        
+    if dict['command'] == 'C': 
         # Convert data to JSON and send
+        websocket.SendText(json.dumps(dict))  
+         
+        pin.value(0)
+        if dict['isStab'] and dict['measure'] > 0:
+            pin.value(1)
+        else:
+            pin.value(0)
+    
+    if dict['command'] == 'STOP':
+        # print(tm)
+        pin.value(0)
+        tm.deinit()
   
 def cb_accept_ws(webSocket, httpClient) :
     print("WS ACCEPT")
